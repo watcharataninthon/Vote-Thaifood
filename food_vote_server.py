@@ -6,8 +6,9 @@ import json, sqlite3, re, os
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'food_votes.db')
-PORT    = 3001
+DB_PATH   = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'food_votes.db')
+HTML_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'food-vote.html')
+PORT      = int(os.environ.get('PORT', 3001))
 
 # ── Database ─────────────────────────────────────────────────────────────────
 def init_db():
@@ -63,6 +64,19 @@ class FoodVoteHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         path = urlparse(self.path).path
+
+        if path in ('/', '/food-vote.html'):
+            try:
+                with open(HTML_PATH, 'rb') as f:
+                    body = f.read()
+                self.send_response(200)
+                self.send_header('Content-Type', 'text/html; charset=utf-8')
+                self.send_header('Content-Length', str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            except FileNotFoundError:
+                self.send_json(404, {'error': 'food-vote.html not found'})
+            return
 
         if path == '/health':
             return self.send_json(200, {'status': 'ok'})
@@ -157,7 +171,7 @@ class FoodVoteHandler(BaseHTTPRequestHandler):
 if __name__ == '__main__':
     init_db()
     server = HTTPServer(('0.0.0.0', PORT), FoodVoteHandler)
-    print(f'\n  🍜 Food Vote API  →  http://localhost:{PORT}')
+    print(f'\n  🍜 Food Vote App  →  http://localhost:{PORT}')
     print(f'  GET  /health         — health check')
     print(f'  GET  /rankings       — leaderboard')
     print(f'  GET  /votes/mine     — คะแนนของฉัน (ต้องส่ง x-session-id header)')

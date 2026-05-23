@@ -190,7 +190,8 @@
 
 <script>
   // ─── Config ────────────────────────────────────────────────────────────────
-  const API = 'http://localhost:3001';
+  // ใช้ same-origin เพื่อรองรับทั้ง local และ cloud deployment
+  const API = window.location.hostname === 'localhost' ? 'http://localhost:3001' : '';
 
   // ─── Session ID ────────────────────────────────────────────────────────────
   let sessionId = localStorage.getItem('food_session_id');
