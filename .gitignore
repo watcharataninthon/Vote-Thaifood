@@ -1,0 +1,16 @@
+# Database
+*.db
+*.sqlite
+
+# Node
+node_modules/
+food-vote-backend/node_modules/
+
+# Data files with user submissions
+data/submissions.json
+
+# Claude Code settings
+.claude/
+
+# macOS
+.DS_Store

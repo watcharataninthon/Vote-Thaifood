@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>โหวตเมนูอาหารไทยโปรด</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;700&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans Thai', 'Segoe UI', sans-serif;
+      background: linear-gradient(160deg, #e8f5e9 0%, #f1f8e9 45%, #f9fde7 100%);
+      min-height: 100vh;
+      color: #2d2d2d;
+    }
+
+    /* ── Hero header ── */
+    .hero {
+      background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 50%, #7cb342 100%);
+      padding: 44px 20px 56px;
+      text-align: center;
+      clip-path: ellipse(110% 100% at 50% 0%);
+      margin-bottom: -20px;
+    }
+    .hero h1 {
+      font-size: 2rem; font-weight: 700; color: #fff;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+      margin-bottom: 8px; letter-spacing: 0.02em;
+    }
+    .hero .subtitle {
+      color: rgba(255,255,255,0.88); font-size: 0.92rem; margin-bottom: 24px;
+    }
+    .controls {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    }
+    .controls button {
+      padding: 8px 20px; border: 2px solid rgba(255,255,255,0.8); border-radius: 24px;
+      background: rgba(255,255,255,0.18); color: #fff;
+      cursor: pointer; font-size: 0.85rem; font-weight: 600;
+      backdrop-filter: blur(4px); transition: all 0.2s;
+      font-family: inherit;
+    }
+    .controls button:hover, .controls button.active {
+      background: #fff; color: #2e7d32;
+    }
+
+    /* ── Content wrapper ── */
+    .content {
+      max-width: 1080px; margin: 0 auto; padding: 32px 16px 40px;
+    }
+
+    .status-bar {
+      text-align: center; font-size: 0.82rem; margin-bottom: 16px; min-height: 20px;
+    }
+    .status-bar.error { color: #c62828; }
+    .status-bar.ok    { color: #2e7d32; }
+    .status-bar.info  { color: #888; }
+
+    /* ── Table ── */
+    table {
+      width: 100%; border-collapse: separate; border-spacing: 0;
+      background: #fff; border-radius: 20px; overflow: hidden;
+      box-shadow: 0 8px 32px rgba(46,125,50,0.10), 0 2px 8px rgba(0,0,0,0.06);
+    }
+    thead th {
+      background: linear-gradient(90deg, #2e7d32 0%, #7cb342 100%);
+      color: #fff; padding: 14px 14px;
+      text-align: left; font-size: 0.88rem; font-weight: 700;
+      white-space: nowrap; letter-spacing: 0.03em;
+    }
+    thead th.center { text-align: center; }
+    thead th:first-child { border-radius: 0; }
+
+    tbody tr {
+      border-bottom: 1px solid #e8f5e9;
+      transition: background 0.15s, transform 0.1s;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover { background: linear-gradient(90deg, #f5fbf5 0%, #edf7ed 100%); }
+    tbody tr.voted { background: linear-gradient(90deg, #edf7ed 0%, #e0f3e0 100%); }
+
+    td { padding: 11px 14px; font-size: 0.88rem; vertical-align: middle; }
+    td.rank {
+      font-weight: 700; text-align: center; width: 42px;
+      font-size: 1rem; color: #7cb342;
+    }
+    td.name { font-weight: 600; min-width: 170px; color: #1a1a1a; }
+    td.price {
+      white-space: nowrap; text-align: right;
+      font-weight: 600; color: #2e7d32;
+    }
+    td.ingredients { color: #888; font-size: 0.79rem; max-width: 270px; line-height: 1.5; }
+    td.votes-cell  { text-align: center; min-width: 90px; }
+
+    /* ── Food image ── */
+    td.img-cell { width: 76px; text-align: center; padding: 8px 6px; }
+    .food-img-wrap {
+      width: 62px; height: 62px; border-radius: 50%; overflow: hidden;
+      margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(46,125,50,0.18), 0 0 0 3px #fff, 0 0 0 5px #c8e6c9;
+      flex-shrink: 0; background: #e8f5e9;
+    }
+    .food-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .food-emoji {
+      width: 100%; height: 100%; font-size: 1.9rem; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Vote bar ── */
+    .vote-count { font-size: 1.15rem; font-weight: 700; color: #2e7d32; }
+    .bar-wrap {
+      background: #dcedc8; border-radius: 6px; height: 7px;
+      margin-top: 5px; overflow: hidden;
+    }
+    .bar {
+      height: 100%;
+      background: linear-gradient(90deg, #2e7d32, #7cb342);
+      border-radius: 6px; transition: width 0.45s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Buttons ── */
+    td.action { text-align: center; min-width: 108px; }
+    .vote-btn {
+      padding: 7px 20px; border-radius: 24px; border: none; cursor: pointer;
+      font-size: 0.82rem; font-weight: 700; transition: all 0.2s;
+      background: linear-gradient(135deg, #2e7d32, #7cb342);
+      color: #fff; letter-spacing: 0.03em;
+      box-shadow: 0 2px 8px rgba(46,125,50,0.3);
+      font-family: inherit;
+    }
+    .vote-btn:hover { filter: brightness(1.1); transform: translateY(-1px) scale(1.04); }
+    .vote-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; filter: none; }
+    .vote-btn.unvote {
+      background: #fff; color: #2e7d32;
+      border: 2px solid #2e7d32; box-shadow: none;
+    }
+    .vote-btn.unvote:hover { background: #f1f8e9; transform: translateY(-1px); }
+
+    /* ── Footer ── */
+    .total-info { text-align: center; margin-top: 18px; color: #aaa; font-size: 0.85rem; }
+    .credit { text-align: center; margin-top: 8px; font-size: 0.75rem; color: #ccc; }
+    .credit a { color: #7cb342; text-decoration: none; }
+    .credit a:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      td.ingredients { display: none; }
+      .hero h1 { font-size: 1.4rem; }
+      .food-img-wrap { width: 48px; height: 48px; }
+      .food-emoji { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>🍜 โหวตเมนูอาหารไทยที่คุณชื่นชอบ</h1>
+  <p class="subtitle">คลิก "โหวต" เพื่อเลือกเมนูโปรดของคุณ · โหวตได้หลายรายการ</p>
+  <div class="controls">
+    <button class="active" onclick="setSort('default')">เรียงตามรายการ</button>
+    <button onclick="setSort('votes')">เรียงตามคะแนน</button>
+    <button onclick="refresh()">รีเฟรช</button>
+  </div>
+</div>
+
+<div class="content">
+<div class="status-bar info" id="status">กำลังโหลดข้อมูล...</div>
+
+<table id="menu-table">
+  <thead>
+    <tr>
+      <th class="center">#</th>
+      <th class="center">รูป</th>
+      <th>เมนูอาหาร</th>
+      <th class="center">ราคา</th>
+      <th>ส่วนประกอบ</th>
+      <th class="center">คะแนน</th>
+      <th class="center">โหวต</th>
+    </tr>
+  </thead>
+  <tbody id="table-body">
+    <tr><td colspan="7" style="text-align:center;padding:40px;color:#aaa">กำลังโหลด...</td></tr>
+  </tbody>
+</table>
+
+<p class="total-info" id="total-info"></p>
+<p class="credit">ภาพอาหารจาก <a href="https://commons.wikimedia.org/wiki/Category:Cuisine_of_Thailand" target="_blank">Wikimedia Commons</a> (CC)</p>
+
+<script>
+  // ─── Config ────────────────────────────────────────────────────────────────
+  const API = 'http://localhost:3001';
+
+  // ─── Session ID ────────────────────────────────────────────────────────────
+  let sessionId = localStorage.getItem('food_session_id');
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem('food_session_id', sessionId);
+  }
+  const headers = { 'Content-Type': 'application/json', 'x-session-id': sessionId };
+
+  // ─── Wikimedia Commons thumbnails ──────────────────────────────────────────
+  const WM = 'https://upload.wikimedia.org/wikipedia/commons/thumb';
+  const FOOD_IMAGES = {
+    1:  `${WM}/e/ed/Pad_Thai.JPG/250px-Pad_Thai.JPG`,
+    2:  `${WM}/9/9c/Tom_Yum_Soup.JPG/250px-Tom_Yum_Soup.JPG`,
+    3:  `${WM}/7/7f/Green_curry.jpg/250px-Green_curry.jpg`,
+    4:  `${WM}/a/a8/Beef_Massaman_curry_with_brown_rice.jpg/250px-Beef_Massaman_curry_with_brown_rice.jpg`,
+    5:  `${WM}/0/0a/Som_tam_thai.JPG/250px-Som_tam_thai.JPG`,
+    6:  `${WM}/2/29/Ka-phrao_that_%28basil_fried_pork_served_on_tray%29%2C_Bangkok%2C_2018-08-07_%282%29.jpg/250px-Ka-phrao_that_%28basil_fried_pork_served_on_tray%29%2C_Bangkok%2C_2018-08-07_%282%29.jpg`,
+    7:  `${WM}/3/3f/Crab_fried_rice.jpg/250px-Crab_fried_rice.jpg`,
+    8:  `${WM}/1/1e/Yam_wun_sen.JPG/250px-Yam_wun_sen.JPG`,
+    9:  `${WM}/5/52/Tom_kha_gai2.jpg/250px-Tom_kha_gai2.jpg`,
+    10: `${WM}/f/fb/Nam_tok_kor_moo_yang.jpg/250px-Nam_tok_kor_moo_yang.jpg`,
+    11: `${WM}/e/e9/Kai_phat_met_mamuang_himaphan_2.jpg/250px-Kai_phat_met_mamuang_himaphan_2.jpg`,
+    12: `${WM}/0/0d/Panang_curry_%2842943883862%29.jpg/250px-Panang_curry_%2842943883862%29.jpg`,
+    13: `${WM}/2/24/Pla_kaphong_phat_khuen_chai.jpg/250px-Pla_kaphong_phat_khuen_chai.jpg`,
+    14: `${WM}/b/bb/Larb.jpg/250px-Larb.jpg`,
+    15: `${WM}/d/de/Kaeng_som_chaom_thot.jpg/250px-Kaeng_som_chaom_thot.jpg`,
+    16: `${WM}/4/43/Pu_Phat_Phong_Kari.jpg/250px-Pu_Phat_Phong_Kari.jpg`,
+    17: `${WM}/f/fe/Pak_kanaa_moo_krob.jpg/250px-Pak_kanaa_moo_krob.jpg`,
+    18: `${WM}/f/f0/Udang_Tumis_Bawang_Putih_Cili.jpg/250px-Udang_Tumis_Bawang_Putih_Cili.jpg`,
+    19: `${WM}/2/25/Hoi_Lai_Pad_Phrik_Pao75.jpg/250px-Hoi_Lai_Pad_Phrik_Pao75.jpg`,
+    20: `${WM}/6/61/Mango_sticky_rice.jpg/250px-Mango_sticky_rice.jpg`,
+  };
+
+  const FOOD_EMOJIS = {
+    1:'🍜', 2:'🍲', 3:'🍛', 4:'🍛', 5:'🥗',
+    6:'🌿', 7:'🍚', 8:'🥗', 9:'🍲', 10:'🥩',
+    11:'🍗', 12:'🍛', 13:'🐟', 14:'🥗', 15:'🍲',
+    16:'🦀', 17:'🥓', 18:'🦐', 19:'🦪', 20:'🥭',
+  };
+
+  // ─── Menu data ─────────────────────────────────────────────────────────────
+  const menus = [
+    { id: 1,  name: "ผัดไทยกุ้งสด",                   price: 150, ingredients: "เส้นจันท์, กุ้งสด, เต้าหู้แข็ง, ไข่, ถั่วงอก, ต้นหอม, ถั่วลิสงคั่ว, มะขามเปียก, ไชโป๊ว" },
+    { id: 2,  name: "ต้มยำกุ้งน้ำข้น",                 price: 250, ingredients: "กุ้งแม่น้ำ, เห็ดฟาง, ตะไคร้, ข่า, ใบมะกรูด, พริกขี้หนู, นมข้นจืด, น้ำพริกเผา, มะนาว" },
+    { id: 3,  name: "แกงเขียวหวานไก่",                 price: 180, ingredients: "เนื้อไก่, มะเขือเปราะ, มะเขือพวง, ใบโหระพา, พริกชี้ฟ้าแดง, กะทิสด, พริกแกงเขียวหวาน" },
+    { id: 4,  name: "แกงมัสมั่นเนื้อ",                 price: 250, ingredients: "เนื้อวัวตุ๋น, มันฝรั่ง, หัวหอม, ถั่วลิสงคั่ว, กะทิ, เครื่องแกงมัสมั่น, มะขามเปียก, อบเชย" },
+    { id: 5,  name: "ส้มตำไทย",                        price: 80,  ingredients: "มะละกอดิบ, แครอต, มะเขือเทศ, ถั่วฝักยาว, ถั่วลิสง, กุ้งแห้ง, พริกขี้หนู, กระเทียม" },
+    { id: 6,  name: "ข้าวผัดกระเพราหมูสับไข่ดาว",      price: 120, ingredients: "หมูสับ, ใบกระเพรา, พริกขี้หนู, กระเทียม, น้ำมันหอย, ซีอิ๊วขาว, น้ำปลา, ไข่ดาว" },
+    { id: 7,  name: "ข้าวผัดปู",                       price: 180, ingredients: "ข้าวสวย, เนื้อปู, ไข่, ต้นหอม, หัวหอม, ซีอิ๊วขาว, เนย, พริกไทย" },
+    { id: 8,  name: "ยำวุ้นเส้นทะเล",                 price: 180, ingredients: "วุ้นเส้น, กุ้งลวก, ปลาหมึกลวก, หมูสับ, หัวหอม, มะเขือเทศ, พริกขี้หนู, มะนาว" },
+    { id: 9,  name: "ต้มข่าไก่",                       price: 160, ingredients: "เนื้อไก่, กะทิสด, ข่าอ่อนซอย, ตะไคร้, ใบมะกรูด, เห็ดฟาง, หอมแดง, มะนาว" },
+    { id: 10, name: "คอหมูย่าง",                       price: 150, ingredients: "คอหมู, น้ำมันหอย, ซีอิ๊วขาว, รากผักชี, กระเทียม, พริกไทย, น้ำผึ้ง" },
+    { id: 11, name: "ผัดไก่เม็ดมะม่วงหิมพานต์",        price: 160, ingredients: "เนื้อไก่, เม็ดมะม่วงหิมพานต์คั่ว, พริกแห้งทอด, หัวหอม, ต้นหอม, น้ำมันหอย" },
+    { id: 12, name: "แกงพะแนงหมู",                     price: 160, ingredients: "เนื้อหมู, กะทิ, พริกแกงพะแนง, ใบมะกรูดซอย, พริกชี้ฟ้าแดง, น้ำปลา, น้ำตาลปึก" },
+    { id: 13, name: "ปลากะพงทอดน้ำปลา",               price: 350, ingredients: "ปลากะพงสด, น้ำปลาชั้นดี, น้ำตาล, น้ำมันพืช, ยำมะม่วง" },
+    { id: 14, name: "ลาบหมู",                          price: 100, ingredients: "หมูสับสุก, ข้าวคั่วป่น, พริกป่น, หอมแดงซอย, ต้นหอม, ใบสะระแหน่, มะนาว" },
+    { id: 15, name: "แกงส้มชะอมไข่กุ้ง",              price: 200, ingredients: "กุ้งสด, ไข่, ชะอม, พริกแกงส้ม, มะขามเปียก, น้ำปลา, น้ำตาลปึก" },
+    { id: 16, name: "ผัดผงกะหรี่ปู",                  price: 380, ingredients: "เนื้อปูก้อน, ผงกะหรี่เหลือง, ไข่, นมข้นจืด, หัวหอม, ต้นหอม, น้ำมันหอย" },
+    { id: 17, name: "ผัดหมูกรอบพริกเกลือ",            price: 160, ingredients: "หมูสามชั้นกรอบ, พริกขี้หนูสับ, กระเทียมสับ, ต้นหอมซอย, เกลือ, พริกไทย" },
+    { id: 18, name: "กุ้งอบกระเทียมพริกไทย",           price: 220, ingredients: "กุ้งสดปอกเปลือก, กระเทียมเจียว, พริกแห้งทอด, รากผักชี, พริกไทยดำ" },
+    { id: 19, name: "ผัดหอยลายน้ำพริกเผา",            price: 160, ingredients: "หอยลายสด, น้ำพริกเผา, กระเทียมบุบ, พริกขี้หนูบุบ, ใบโหระพา, นมข้นจืด" },
+    { id: 20, name: "ข้าวเหนียวมะม่วง",               price: 120, ingredients: "มะม่วงสุก, ข้าวเหนียวมูน, กะทิสด, น้ำตาล, เกลือ, ถั่วทองคั่ว" },
+  ];
+
+  // ─── State ─────────────────────────────────────────────────────────────────
+  let voteMap = {};
+  let myVotes = new Set();
+  let sortMode = 'default';
+
+  // ─── API helpers ───────────────────────────────────────────────────────────
+  function setStatus(msg, type = 'info') {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = `status-bar ${type}`;
+  }
+
+  async function loadData() {
+    try {
+      const [rankRes, mineRes] = await Promise.all([
+        fetch(`${API}/rankings`, { headers }),
+        fetch(`${API}/votes/mine`, { headers }),
+      ]);
+      if (!rankRes.ok || !mineRes.ok) throw new Error();
+
+      const rankings = await rankRes.json();
+      const mine     = await mineRes.json();
+
+      voteMap = {};
+      rankings.forEach(r => { voteMap[r.menu_id] = r.vote_count; });
+      myVotes = new Set(mine);
+
+      setStatus('เชื่อมต่อ API สำเร็จ', 'ok');
+    } catch {
+      setStatus('ไม่สามารถเชื่อมต่อ API — แสดงผลแบบ offline (localStorage)', 'info');
+      loadLocalVotes();
+    }
+    renderTable();
+  }
+
+  // Offline fallback using localStorage
+  function loadLocalVotes() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('food_votes_offline') || '{}');
+      voteMap  = saved.voteMap  || {};
+      myVotes  = new Set(saved.myVotes || []);
+    } catch { voteMap = {}; myVotes = new Set(); }
+  }
+  function saveLocalVotes() {
+    localStorage.setItem('food_votes_offline', JSON.stringify({
+      voteMap, myVotes: [...myVotes]
+    }));
+  }
+
+  async function toggleVote(menuId) {
+    const btn = document.getElementById(`btn-${menuId}`);
+    btn.disabled = true;
+
+    try {
+      const method = myVotes.has(menuId) ? 'DELETE' : 'POST';
+      const res = await fetch(`${API}/vote/${menuId}`, { method, headers });
+
+      if (res.status === 409) { setStatus('โหวตเมนูนี้ไปแล้ว', 'error'); return; }
+      if (!res.ok) throw new Error();
+
+      const data = await res.json();
+      voteMap[menuId] = data.vote_count;
+      method === 'POST' ? myVotes.add(menuId) : myVotes.delete(menuId);
+      setStatus('บันทึกการโหวตแล้ว', 'ok');
+    } catch {
+      // Offline fallback
+      if (myVotes.has(menuId)) {
+        voteMap[menuId] = Math.max(0, (voteMap[menuId] || 1) - 1);
+        myVotes.delete(menuId);
+      } else {
+        voteMap[menuId] = (voteMap[menuId] || 0) + 1;
+        myVotes.add(menuId);
+      }
+      saveLocalVotes();
+      setStatus('บันทึกแบบ offline (ไม่พบ API)', 'info');
+    } finally {
+      renderTable();
+      const newBtn = document.getElementById(`btn-${menuId}`);
+      if (newBtn) newBtn.disabled = false;
+    }
+  }
+
+  function refresh() { loadData(); }
+
+  function setSort(mode) {
+    sortMode = mode;
+    document.querySelectorAll('.controls button').forEach((b, i) => {
+      b.classList.toggle('active', (i === 0 && mode === 'default') || (i === 1 && mode === 'votes'));
+    });
+    renderTable();
+  }
+
+  // ─── Render ────────────────────────────────────────────────────────────────
+  function renderTable() {
+    const max   = Math.max(1, ...Object.values(voteMap));
+    const total = Object.values(voteMap).reduce((s, v) => s + v, 0);
+
+    let sorted = [...menus];
+    if (sortMode === 'votes') {
+      sorted.sort((a, b) => (voteMap[b.id] || 0) - (voteMap[a.id] || 0));
+    }
+
+    const medals = ['🥇', '🥈', '🥉'];
+
+    document.getElementById('table-body').innerHTML = sorted.map((m, idx) => {
+      const vc    = voteMap[m.id] || 0;
+      const voted = myVotes.has(m.id);
+      const pct   = Math.round((vc / max) * 100);
+      const rankLabel = (sortMode === 'votes' && vc > 0 && idx < 3)
+        ? medals[idx] : m.id;
+
+      const imgUrl = FOOD_IMAGES[m.id];
+      const emoji  = FOOD_EMOJIS[m.id] || '🍽️';
+
+      const imgHtml = imgUrl
+        ? `<img src="${imgUrl}" alt="${m.name}" class="food-img" loading="lazy"
+                onerror="this.style.display='none';document.getElementById('em-${m.id}').style.display='flex'">`
+        : '';
+
+      return `<tr class="${voted ? 'voted' : ''}">
+        <td class="rank">${rankLabel}</td>
+        <td class="img-cell">
+          <div class="food-img-wrap">
+            ${imgHtml}
+            <div id="em-${m.id}" class="food-emoji" style="display:${imgUrl ? 'none' : 'flex'}">${emoji}</div>
+          </div>
+        </td>
+        <td class="name">${m.name}</td>
+        <td class="price">${m.price} ฿</td>
+        <td class="ingredients">${m.ingredients}</td>
+        <td class="votes-cell">
+          <span class="vote-count">${vc}</span>
+          <div class="bar-wrap"><div class="bar" style="width:${pct}%"></div></div>
+        </td>
+        <td class="action">
+          <button id="btn-${m.id}" class="vote-btn ${voted ? 'unvote' : ''}" onclick="toggleVote(${m.id})">
+            ${voted ? '✓ ถอนโหวต' : '♥ โหวต'}
+          </button>
+        </td>
+      </tr>`;
+    }).join('');
+
+    document.getElementById('total-info').textContent = total === 0
+      ? 'ยังไม่มีการโหวต'
+      : `รวมทั้งหมด ${total} คะแนน · คุณโหวต ${myVotes.size} เมนู`;
+  }
+
+  loadData();
+</script>
+</div><!-- /.content -->
+</body>
+</html>
